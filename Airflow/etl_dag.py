@@ -5,6 +5,9 @@ from datetime import timedelta
 from airflow.decorators import dag, task
 from airflow.operators.bash import BashOperator
 
+
+KAFKA_EXTERNAL_BROKER = "172.31.1.223:9092"
+
 # Define the default arguments that will be applied to all tasks in the DAG.
 default_args = {
     'owner': 'airflow',
@@ -13,7 +16,7 @@ default_args = {
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
-    'retry_delay': timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=1),
 }
 
 # Note: The 'check_for_daily_file' function is now defined directly inside this file
@@ -29,10 +32,11 @@ def check_for_daily_file():
     DATA_DIR = "/mnt/c/Users/Admin/Downloads/log_content"
     
     # Get the current date in YYYY-MM-DD format
-    today_date = pendulum.now().format("YYYY-MM-DD")
+    today_date = '20220401'
+    #today_date = pendulum.now().format("YYYY-MM-DD")
     
     # Construct the expected file name
-    file_name = f"new_data_{today_date}.csv"
+    file_name = f"{today_date}.json"
     file_path = os.path.join(DATA_DIR, file_name)
 
     # Check if the file exists
@@ -46,7 +50,7 @@ def check_for_daily_file():
 @dag(
     dag_id="etl_data_pipeline",
     default_args=default_args,  # We are now using the default arguments here
-    schedule=timedelta(minutes=5),  # Check for a new file every 5 minutes
+    schedule=timedelta(minutes=30),  # Check for a new file every 5 minutes
     catchup=False,
     tags=["spark", "kafka", "pipeline"],
 )
@@ -65,20 +69,19 @@ def etl_data_pipeline():
     # It uses XCom to pull the file path from the previous task.
     run_producer_script = BashOperator(
         task_id='run_producer_script',
-        bash_command=f"spark-submit \
-            --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0 \
-            /mnt/c/Users/Admin/Documents/study_da/DE/BigData/etl_pyspark_kafka_v2.py \
-            {{{{ task_instance.xcom_pull(task_ids='check_for_daily_file') }}}} \
-            /mnt/c/Users/Admin/Downloads/content_result",
+        bash_command=f"export KAFKA_BROKER_ADDRESS={KAFKA_EXTERNAL_BROKER} && spark-submit \
+            --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+            /mnt/c/Users/Admin/Documents/study_da/ETL-With-Kafka-And-Airflow/kafka_producer.py \
+            {{{{ task_instance.xcom_pull(task_ids='check_for_daily_file') }}}} ",
     )
     
     # Step 3: Run the Spark consumer script
     # This BashOperator executes the spark-submit command for the consumer.
     run_consumer_script = BashOperator(
         task_id='run_consumer_script',
-        bash_command=f"spark-submit \
-            --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0 \
-            /mnt/c/Users/Admin/Documents/study_da/DE/BigData/kafka_consumer_to_file.py",
+        bash_command=f"export KAFKA_BROKER_ADDRESS={KAFKA_EXTERNAL_BROKER} && spark-submit \
+            --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+            /mnt/c/Users/Admin/Documents/study_da/ETL-With-Kafka-And-Airflow/kafka_consumer.py",
     )
 
     # Set the dependencies for the tasks
