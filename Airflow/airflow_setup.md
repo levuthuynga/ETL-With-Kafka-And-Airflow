@@ -28,3 +28,7 @@ airflow standalone
 
 # Change encoding
 set PYTHONIOENCODING=utf-8
+
+# Open UI
+http://localhost:8080
+

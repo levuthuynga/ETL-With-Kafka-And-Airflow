@@ -36,10 +36,10 @@ Tech stack: PySpark, Airflow, Kafka, Docker.
 
 ## Setup
 ### Airflow 
-Installed Airflow on WSL
+Installed Airflow on WSL: [airflow_setup.md](/Airflow/airflow_setup.md)
 
 ### Kafka on Docker
-[Folder Kafka](/Kafka/)
+Kafka setup on Docker: [Kafka](/Kafka/)
 ### PySpark 
 Install PySpark
 

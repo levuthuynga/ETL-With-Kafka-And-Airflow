@@ -1,9 +1,7 @@
 import os 
 import sys
-from datetime import datetime ,timedelta 
 from pyspark.sql.session import SparkSession
 from pyspark.sql.functions import *
-
 
 
 spark = SparkSession.builder.config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")\
@@ -11,18 +9,22 @@ spark = SparkSession.builder.config("spark.jars.packages", "org.apache.spark:spa
 
 
     
-def get_data(): 
-    ## input_url = 'C:\\Users\\Admin\\Downloads\\log_content'
-    input_url = '/mnt/c/Users/Admin/Downloads/log_content'
-    date = '20220401'
-    df = spark.read.json(input_url+"/"+date+'.json')
+def get_data(input_url): 
+    """
+    Reads the input JSON file into a DataFrame.
+    """
+    df = spark.read.json(input_url)
+    print(f"Successfully read {df.count()} records.")
     return df
 
 
 
 def select_fields(df):	
-	df = df.select("_source.*")
-	return df 
+    """
+    Flattens the data by selecting fields nested under the '_source' structure.
+    """
+    df = df.select("_source.*")
+    return df 
 
 
 
@@ -47,15 +49,24 @@ def save_to_kafka(df, kafka_broker: str, kafka_topic: str):
 
 
 
-def main(kafka_broker, kafka_topic):
-    df = get_data()
+def main(input_url: str, kafka_broker: str, kafka_topic: str):
+    df = get_data(input_url)
     df = select_fields(df)
     save_to_kafka(df, kafka_broker, kafka_topic)
 
 
 
 if __name__ == "__main__":
-    KAFKA_BROKER = "localhost:9092"
+    # Check for command-line arguments
+    if len(sys.argv) < 2:
+        print("Error: Input file path is required as a command-line argument.")
+        sys.exit(1)
+    
+    input_url = sys.argv[1]
+    KAFKA_BROKER = os.getenv("KAFKA_BROKER_ADDRESS", "localhost:9092")
     KAFKA_TOPIC = "log-content-topic"
-    main(KAFKA_BROKER, KAFKA_TOPIC)
+
+    main(input_url, KAFKA_BROKER, KAFKA_TOPIC)
+
+    spark.stop()
 
