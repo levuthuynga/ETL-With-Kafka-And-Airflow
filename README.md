@@ -13,7 +13,7 @@ Tech stack: PySpark, Airflow, Kafka, Docker.
 ## Raw data
 
 ### Data Disctionary
-| Column Name | Data Type |
+| Column Name | Description |
 |-------------|-----------|
 | Contract | User ID |
 | Mac | Device ID |
@@ -23,7 +23,7 @@ Tech stack: PySpark, Airflow, Kafka, Docker.
 
 ## Clean data
 ### Data Disctionary
-| Column Name | Data Type |
+| Column Name | Description |
 |-------------|-----------|
 | Contract | User ID |
 | Giải trí | The time the user spends on Entertainment programs |
