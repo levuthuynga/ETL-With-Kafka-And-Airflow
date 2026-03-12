@@ -21,7 +21,6 @@ default_args = {
     'retry_delay': timedelta(minutes=1),
 }
 
-# Note: The 'check_for_daily_file' function is now defined directly inside this file
 @task
 def check_for_daily_file():
     """
